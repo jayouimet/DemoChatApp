@@ -98,12 +98,9 @@ public class AuthenticatedHttpClientHandler : DelegatingHandler
             ms.Position = 0;
             clone.Content = new StreamContent(ms);
 
-            if (request.Content.Headers != null)
+            foreach (var header in request.Content.Headers)
             {
-                foreach (var header in request.Content.Headers)
-                {
-                    clone.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
-                }
+                clone.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
         }
 

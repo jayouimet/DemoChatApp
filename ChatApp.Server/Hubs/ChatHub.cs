@@ -9,6 +9,7 @@ namespace ChatApp.Server.Hubs;
 [Authorize]
 public class ChatHub : Hub<IChatHubClient>, IChatHubServer
 {
+    private static readonly Dictionary<int, string> Connections = new Dictionary<int, string>();
     private static readonly IDictionary<int, UserDto> ConnectedUsers = new Dictionary<int, UserDto>();
     private static readonly ICollection<MessageDto> Messages = new List<MessageDto>();
     
@@ -20,7 +21,13 @@ public class ChatHub : Hub<IChatHubClient>, IChatHubServer
     public async Task SendMessage(MessageDto message)
     {
         Messages.Add(message);
-        await Clients.All.OnMessageSent(message);
+        
+        await Clients.Caller.OnMessageSent(message);
+        
+        if (Connections.TryGetValue(message.ToUserId, out var toConnectionId))
+        {
+            await Clients.Client(toConnectionId).OnMessageSent(message);
+        }
     }
 
     public override async Task OnConnectedAsync()
@@ -34,6 +41,7 @@ public class ChatHub : Hub<IChatHubClient>, IChatHubServer
         
         if (ConnectedUsers.TryAdd(user.Id, user))
         {
+            Connections.Add(user.Id, Context.ConnectionId);
             await Clients.Others.UserConnected(user);
         }
     }

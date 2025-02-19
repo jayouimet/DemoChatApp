@@ -1,8 +1,4 @@
 @page "/chat"
-@using AutoMapper
-@using ChatApp.Common.Dtos.Message
-@using ChatApp.Common.Hubs.Interfaces
-@using ChatApp.Common.Dtos.User
 @using Microsoft.AspNetCore.SignalR.Client
 
 @implements IAsyncDisposable
@@ -31,15 +27,15 @@
     private UserDto? _selectedUser;
     
     private List<UserDto> _users = new List<UserDto>();
-    private List<string> _messages = new List<string>();
+    private List<MessageDto> _messages = new List<MessageDto>();
 
     private HubConnection? _hubConnection;
     
     private async Task HandleSendMessage(string message)
     {
-        if (!string.IsNullOrWhiteSpace(message) && _hubConnection is not null)
+        if (!string.IsNullOrWhiteSpace(message) && _hubConnection is not null && _selectedUser is not null)
         {
-            await _hubConnection.SendAsync(nameof(IChatHubServer.SendMessage), new MessageDto{ FromUserId = 0, ToUserId = 0, Content = message});
+            await _hubConnection.SendAsync(nameof(IChatHubServer.SendMessage), new MessageDto{ ToUserId = _selectedUser.Id, Content = message});
         }
     }
     
@@ -70,9 +66,9 @@
             }
             ).Build();
 
-        hubConnection.On<UserDto>(nameof(IChatHubClient.UserConnected), (userName) =>
+        hubConnection.On<UserDto>(nameof(IChatHubClient.UserConnected), (user) =>
         {
-            Users.Add(userName);
+            Users.Add(user);
             StateHasChanged();
         });
         
@@ -84,7 +80,7 @@
 
         hubConnection.On<MessageDto>(nameof(IChatHubClient.OnMessageSent), (message) =>
         {
-            _messages.Add(message.Content);
+            _messages.Add(message);
             StateHasChanged();
         });
 

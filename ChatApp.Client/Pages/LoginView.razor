@@ -4,6 +4,8 @@
 @inject NavigationManager NavigationManager
 @inject AuthStateProvider AuthStateProvider
 
+@inject IMapper Mapper
+
 @attribute [AllowAnonymous]
 
 <EditForm Model="@_model" OnValidSubmit="OnValidSubmit">
@@ -60,7 +62,7 @@
         try
         {
             _isBusy = true;
-            LoginDto dto = new() { Email = _model.Email, Password = _model.Password };
+            LoginDto dto = Mapper.Map<LoginDto>(_model);
             var result = await ApiServices.Auth.Login(dto);
             _success = result.Success;
             if (_success)

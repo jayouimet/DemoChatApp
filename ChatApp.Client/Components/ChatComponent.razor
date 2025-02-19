@@ -1,4 +1,7 @@
 @using ChatApp.Common.Dtos.User
+
+@inject AuthStateProvider AuthStateProvider
+
 <MudCard>
     <MudCardHeader>
         <MudText Typo="Typo.h6">Chat</MudText>
@@ -25,9 +28,9 @@
             </MudChat>*@
             @foreach (var message in Messages)
             {
-                <MudChat ChatPosition="ChatBubblePosition.End">
+                <MudChat ChatPosition="(message.ToUserId == SelectedUser.Id) ? ChatBubblePosition.End : ChatBubblePosition.Start">
                     <MudChatBubble>
-                        @message
+                        @message.Content
                     </MudChatBubble>
                 </MudChat>
             }
@@ -46,7 +49,7 @@
     public UserDto? SelectedUser { get; set; }
     
     [Parameter] 
-    public required List<string> Messages { get; set; }
+    public required List<MessageDto> Messages { get; set; }
     [Parameter]
     public EventCallback<string> OnSendMessage { get; set; }
 
