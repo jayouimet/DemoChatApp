@@ -1,0 +1,69 @@
+﻿@inject ILocalStorageService LocalStorage
+
+@implements IDisposable
+
+@inject NavigationManager NavigationManager
+@inject AuthStateProvider AuthStateProvider
+
+<MudAppBar Dense="@true" Color="Color.Primary" Fixed="@true">
+    <MudSpacer></MudSpacer>
+    @if (_isAuth)
+    {
+        <MudIconButton 
+            OnClick="Logout" 
+            Icon="@Icons.Material.Filled.Logout"/>
+    }
+    <MudIconButton 
+        OnClick="ToggleTheme" 
+        Icon="@_currentIcon"/>
+</MudAppBar>
+
+@code {
+    [Parameter]
+    public bool IsDarkMode { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsDarkModeChanged { get; set; }
+    
+    private string _currentIcon = Icons.Material.Filled.LightMode;
+    private bool _isAuth = false;
+
+    private async void OnAuthStateChanged(Task<AuthenticationState> authState)
+    {
+        var state = await authState;
+        _isAuth = state.User.Identity?.IsAuthenticated ?? false;
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        AuthStateProvider.AuthenticationStateChanged += OnAuthStateChanged;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        _isAuth = authState.User.Identity?.IsAuthenticated ?? false;
+        
+        IsDarkMode = await LocalStorage.GetItemAsync<bool>("dark_mode");
+        _currentIcon = IsDarkMode ? Icons.Material.Filled.DarkMode : Icons.Material.Filled.LightMode;
+        
+        await IsDarkModeChanged.InvokeAsync(IsDarkMode);
+    }
+    
+    private async Task ToggleTheme()
+    {
+        IsDarkMode = !IsDarkMode;
+        _currentIcon = IsDarkMode ? Icons.Material.Filled.DarkMode : Icons.Material.Filled.LightMode;
+        
+        await LocalStorage.SetItemAsync("dark_mode", IsDarkMode);
+        
+        await IsDarkModeChanged.InvokeAsync(IsDarkMode);
+    }
+    
+    private async Task Logout()
+    {
+        await AuthStateProvider.Logout();
+        NavigationManager.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        AuthStateProvider.AuthenticationStateChanged -= OnAuthStateChanged;
+    }
+}

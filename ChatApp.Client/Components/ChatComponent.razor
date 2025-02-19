@@ -1,0 +1,60 @@
+@using ChatApp.Common.Dtos.User
+<MudCard>
+    <MudCardHeader>
+        <MudText Typo="Typo.h6">Chat</MudText>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (SelectedUser is null)
+        {
+            <MudText Typo="Typo.h6">Select a user to connect to the chat...</MudText>
+        }
+        else 
+        {
+            @*<MudChat ChatPosition="ChatBubblePosition.Start">
+                <MudChatBubble>
+                    It's over Anakin
+                </MudChatBubble>
+                <MudChatBubble>
+                    I have the high ground.
+                </MudChatBubble>
+            </MudChat>
+            <MudChat ChatPosition="ChatBubblePosition.End">
+                <MudChatBubble>
+                    You underestimate my power!
+                </MudChatBubble>
+            </MudChat>*@
+            @foreach (var message in Messages)
+            {
+                <MudChat ChatPosition="ChatBubblePosition.End">
+                    <MudChatBubble>
+                        @message
+                    </MudChatBubble>
+                </MudChat>
+            }
+        }
+    </MudCardContent>
+    <MudCardActions Class="pa-2">
+        <MudTextField @bind-Value="_message" Placeholder="Type your message..." FullWidth="true" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SendMessage" Class="ml-2">
+            Send
+        </MudButton>
+    </MudCardActions>
+</MudCard>
+
+@code {
+    [Parameter]
+    public UserDto? SelectedUser { get; set; }
+    
+    [Parameter] 
+    public required List<string> Messages { get; set; }
+    [Parameter]
+    public EventCallback<string> OnSendMessage { get; set; }
+
+    private string _message = string.Empty;
+
+    private async Task SendMessage()
+    {
+        await OnSendMessage.InvokeAsync(_message);
+        _message = string.Empty;
+    }
+}

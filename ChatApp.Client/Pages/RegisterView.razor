@@ -1,0 +1,95 @@
+@page "/register"
+
+@inject ApiServices ApiServices
+@inject NavigationManager NavigationManager
+@inject AuthStateProvider AuthStateProvider
+
+@attribute [AllowAnonymous]
+
+<EditForm Model="@_model" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <MudContainer MaxWidth="MaxWidth.Small">
+        <MudCard Style="padding: 1em">
+            <MudCardHeader>
+                <MudText Typo="Typo.h5">Register</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudTextField
+                    Label="Email"
+                    Class="mt-3"
+                    @bind-Value="_model.Email"
+                    For="@(() => _model.Email)"
+                    InputType="InputType.Email"
+                ></MudTextField>
+                <MudTextField
+                    Label="Username"
+                    Class="mt-3"
+                    @bind-Value="_model.UserName"
+                    For="@(() => _model.UserName)"
+                ></MudTextField>
+                <MudTextField
+                    Label="Password"
+                    HelperText="Choose a strong password"
+                    Class="mt-3"
+                    @bind-Value="_model.Password"
+                    For="@(() => _model.Password)"
+                    InputType="InputType.Password"
+                ></MudTextField>
+                <MudTextField
+                    Label="Confirm your password"
+                    HelperText="Must be the same as your password"
+                    Class="mt-3"
+                    @bind-Value="_model.ConfirmPassword"
+                    For="@(() => _model.ConfirmPassword)"
+                    InputType="InputType.Password"
+                ></MudTextField>
+                <MudLink
+                    Style="text-decoration: none"
+                    Typo="Typo.caption"
+                    Href="/">
+                    Already have an account?
+                    <span style="text-decoration: underline">
+                        Sign in here.
+                    </span>
+                </MudLink>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton
+                    Disabled="_isBusy"
+                    ButtonType="ButtonType.Submit"
+                    Variant="Variant.Filled"
+                    Color="Color.Primary"
+                    Class="ml-auto">
+                    Sign up
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudContainer>
+</EditForm>
+
+@code {
+    private readonly RegisterForm _model = new RegisterForm();
+    private bool _isBusy = false;
+    private bool _success;
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        try
+        {
+            _isBusy = true;
+            RegisterDto dto = new() { Email = _model.Email, UserName = _model.UserName, Password = _model.Password };
+            var result = await ApiServices.Auth.Register(dto);
+            _success = result.Success;
+            if (_success)
+            {
+                await AuthStateProvider.Login(result.Data!);
+                NavigationManager.NavigateTo("/chat");
+            }
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,78 @@
+@page "/"
+
+@inject ApiServices ApiServices
+@inject NavigationManager NavigationManager
+@inject AuthStateProvider AuthStateProvider
+
+@attribute [AllowAnonymous]
+
+<EditForm Model="@_model" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator/>
+    <MudContainer MaxWidth="MaxWidth.Small">
+        <MudCard Style="padding: 1em">
+            <MudCardHeader>
+                <MudText Typo="Typo.h5">Login</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudTextField
+                    Label="Email"
+                    Class="mt-3"
+                    @bind-Value="_model.Email"
+                    For="@(() => _model.Email)"
+                    InputType="InputType.Email"></MudTextField>
+                <MudTextField
+                    Label="Password"
+                    Class="mt-3"
+                    @bind-Value="_model.Password"
+                    For="@(() => _model.Password)"
+                    InputType="InputType.Password"></MudTextField>
+                <MudLink
+                    Style="text-decoration: none"
+                    Typo="Typo.caption"
+                    Href="/register">
+                    You do not have an account?
+                    <span style="text-decoration: underline">
+                        Sign up here.
+                    </span>
+                </MudLink>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton
+                    Disabled="_isBusy"
+                    ButtonType="ButtonType.Submit"
+                    Variant="Variant.Filled"
+                    Color="Color.Primary"
+                    Class="ml-auto">
+                    Sign in
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudContainer>
+</EditForm>
+
+@code {
+    private readonly LoginForm _model = new LoginForm();
+    private bool _isBusy = false;
+    private bool _success;
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        try
+        {
+            _isBusy = true;
+            LoginDto dto = new() { Email = _model.Email, Password = _model.Password };
+            var result = await ApiServices.Auth.Login(dto);
+            _success = result.Success;
+            if (_success)
+            {
+                await AuthStateProvider.Login(result.Data!);
+                NavigationManager.NavigateTo("/chat");
+            }
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+        StateHasChanged();
+    }
+}
