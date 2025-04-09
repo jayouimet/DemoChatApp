@@ -17,7 +17,7 @@
             <UserListComponent OnUserSelected="HandleUserSelected" Users="_users.Where(user => Users.Any(x => x.Id == user.Id)).ToList()"/>
         </MudItem>
         <MudItem xs="12" md="8">
-            <ChatComponent SelectedUser="_selectedUser" Messages="_messages" OnSendMessage="HandleSendMessage"/>
+            <ChatComponent SelectedUser="_selectedUser" OnSendMessage="HandleSendMessage"/>
         </MudItem>
     </MudGrid>
 </MudContainer>

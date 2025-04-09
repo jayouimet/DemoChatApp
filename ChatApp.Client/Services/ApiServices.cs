@@ -7,6 +7,7 @@ public class ApiServices
 
     public readonly AuthService Auth;
     public readonly UserService User;
+    public readonly MessageService Message;
 
     public ApiServices(IHttpClientFactory httpClientFactory)
     {
@@ -15,6 +16,7 @@ public class ApiServices
 
         Auth = new AuthService(_anonymousClient);
         User = new UserService(_authenticatedClient);
+        Message = new MessageService(_authenticatedClient);
     }
     
     public HttpClient AuthenticatedClient => _authenticatedClient;
