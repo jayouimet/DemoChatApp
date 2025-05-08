@@ -1,6 +1,12 @@
-@using ChatApp.Common.Dtos.User
+@rendermode InteractiveWebAssembly
+
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
 
 @inject AuthStateProvider AuthStateProvider
+
+@using ChatApp.Client.Stores
+@inject IState<MessageListState> MessageListState
+@inject IDispatcher Dispatcher
 
 <MudCard>
     <MudCardHeader>
@@ -13,26 +19,20 @@
         }
         else 
         {
-            @*<MudChat ChatPosition="ChatBubblePosition.Start">
-                <MudChatBubble>
-                    It's over Anakin
-                </MudChatBubble>
-                <MudChatBubble>
-                    I have the high ground.
-                </MudChatBubble>
-            </MudChat>
-            <MudChat ChatPosition="ChatBubblePosition.End">
-                <MudChatBubble>
-                    You underestimate my power!
-                </MudChatBubble>
-            </MudChat>*@
-            @foreach (var message in Messages)
+            if (MessageListState.Value.IsLoading)
             {
-                <MudChat ChatPosition="(message.ToUserId == SelectedUser.Id) ? ChatBubblePosition.End : ChatBubblePosition.Start">
-                    <MudChatBubble>
-                        @message.Content
-                    </MudChatBubble>
-                </MudChat>
+                <MudText Typo="Typo.h6">Loading...</MudText>
+            }
+            else
+            {
+                @foreach (var message in MessageListState.Value.Data)
+                {
+                    <MudChat ChatPosition="(message.ToUserId == SelectedUser.Id) ? ChatBubblePosition.End : ChatBubblePosition.Start">
+                        <MudChatBubble>
+                            @message.Content
+                        </MudChatBubble>
+                    </MudChat>
+                }
             }
         }
     </MudCardContent>
@@ -47,9 +47,8 @@
 @code {
     [Parameter]
     public UserDto? SelectedUser { get; set; }
+    private long? _previousUserId;
     
-    [Parameter] 
-    public required List<MessageDto> Messages { get; set; }
     [Parameter]
     public EventCallback<string> OnSendMessage { get; set; }
 
@@ -59,5 +58,14 @@
     {
         await OnSendMessage.InvokeAsync(_message);
         _message = string.Empty;
+    }
+    
+    protected override void OnParametersSet()
+    {
+        if (SelectedUser is not null && SelectedUser.Id != _previousUserId)
+        {
+            Dispatcher.Dispatch(new FetchMessageListAction(SelectedUser.Id));
+            _previousUserId = SelectedUser.Id;
+        }
     }
 }
